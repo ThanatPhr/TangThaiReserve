@@ -12,7 +12,7 @@ const ReservationSchema=new mongoose.Schema({
         required: true
     },
 
-    hospital: {
+    restaurant: {
         type: mongoose.Schema.ObjectId,
         ref: 'Restaurant',
         required: true
