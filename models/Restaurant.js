@@ -26,8 +26,8 @@ const RestaurantSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please add an open time"],
     match: [
-      /^([01][0-9]|2[0-3]):[0-5][0-9]$/, 
-      "Please add a valid time in format 00:00"
+      /^([01][0-9]|2[0-3]):[0-5][0-9]$/,
+      "Please add a valid time in format 00:00",
     ],
   },
 
@@ -35,8 +35,8 @@ const RestaurantSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please add a close time"],
     match: [
-      /^([01][0-9]|2[0-3]):[0-5][0-9]$/, 
-      "Please add a valid time in format 00:00"
+      /^([01][0-9]|2[0-3]):[0-5][0-9]$/,
+      "Please add a valid time in format 00:00",
     ],
     validate: {
       validator: closeTimeValidator,
