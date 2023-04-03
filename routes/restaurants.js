@@ -1,4 +1,7 @@
 const express = require('express')
+
+const { protect, authorize } = require('../middleware/auth')
+
 const {
   getRestaurants,
   getRestaurant,
@@ -6,9 +9,12 @@ const {
   updateRestaurant,
   deleteRestaurant,
 } = require('../controllers/restaurants')
-const { protect, authorize } = require('../middleware/auth')
+
+const reservationRouter = require('./reservations')
 
 const router = express.Router()
+
+router.use('/:restaurantId/reservations', reservationRouter)
 
 router
   .route('/')
