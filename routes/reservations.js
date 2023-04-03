@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express')
 
 const {
   getReservations,
@@ -6,19 +6,19 @@ const {
   addReservation,
   updateReservation,
   deleteReservation,
-} = require("../controllers/reservations");
-const { protect, authorize } = require("../middleware/auth");
+} = require('../controllers/reservations')
+const { protect, authorize } = require('../middleware/auth')
 
-const router = express.Router({ mergeParams: true });
+const router = express.Router({ mergeParams: true })
 
 router
-  .route("/")
+  .route('/')
   .get(protect, getReservations)
-  .post(protect, authorize("admin", "user"), addReservation);
+  .post(protect, authorize('admin', 'user'), addReservation)
 router
-  .route("/:id")
+  .route('/:id')
   .get(protect, getReservation)
-  .put(protect, authorize("admin", "user"), updateReservation)
-  .delete(protect, authorize("admin", "user"), deleteReservation);
+  .put(protect, authorize('admin', 'user'), updateReservation)
+  .delete(protect, authorize('admin', 'user'), deleteReservation)
 
-module.exports = router;
+module.exports = router
