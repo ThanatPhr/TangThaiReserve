@@ -26,8 +26,8 @@ const RestaurantSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please add an open time"],
     match: [
-      /^([01][0-9]|2[0-3]):[0-5][0-9]$/, 
-      "Please add a valid time in format 00:00"
+      /^([01][0-9]|2[0-3]):[0-5][0-9]$/,
+      "Please add a valid time in format 00:00",
     ],
   },
 
@@ -35,8 +35,8 @@ const RestaurantSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please add a close time"],
     match: [
-      /^([01][0-9]|2[0-3]):[0-5][0-9]$/, 
-      "Please add a valid time in format 00:00"
+      /^([01][0-9]|2[0-3]):[0-5][0-9]$/,
+      "Please add a valid time in format 00:00",
     ],
     validate: {
       validator: closeTimeValidator,
@@ -52,5 +52,18 @@ function closeTimeValidator(enterCloseTime) {
       this.openTime.split(":")[1] < enterCloseTime.split(":")[1])
   );
 }
+
+RestaurantSchema.pre("remove", async function (next) {
+  console.log(`Reservations being removed from restaurant ${this._id}`);
+  await this.model("Reservation").deleteMany({ restaurant: this._id });
+  next();
+});
+
+RestaurantSchema.virtual("reservations", {
+  ref: "Reservation",
+  localField: "_id",
+  foreignField: "restaurant",
+  justOne: false,
+});
 
 module.exports = mongoose.model("Restaurant", RestaurantSchema);
