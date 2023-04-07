@@ -34,7 +34,6 @@ exports.register = async (req, res, next) => {
 
     sendTokenResponse(user, 200, res)
   } catch (err) {
-    console.log(err.stack)
     res.status(400).json({ success: false })
   }
 }
@@ -45,19 +44,23 @@ exports.login = async (req, res, next) => {
   if (!email || !password) {
     return res
       .status(400)
-      .json({ success: false, msg: 'Please provide an email and password' })
+      .json({ success: false, message: 'Please provide an email and password' })
   }
 
   let user = await User.findOne({ email }).select('+password')
 
   if (!user) {
-    return res.status(400).json({ success: false, msg: 'Invalid credentials' })
+    return res
+      .status(400)
+      .json({ success: false, message: 'Invalid credentials' })
   }
 
   const isMatch = await user.matchPassword(password)
 
   if (!isMatch) {
-    return res.status(400).json({ success: false, msg: 'Invalid credentials' })
+    return res
+      .status(400)
+      .json({ success: false, message: 'Invalid credentials' })
   }
 
   sendTokenResponse(user, 200, res)
