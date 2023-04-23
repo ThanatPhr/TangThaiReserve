@@ -6,6 +6,7 @@ const {
   addReservation,
   updateReservation,
   deleteReservation,
+  payReservation,
 } = require('../controllers/reservations')
 const { protect, authorize } = require('../middleware/auth')
 
@@ -20,5 +21,6 @@ router
   .get(protect, getReservation)
   .put(protect, authorize('admin', 'user'), updateReservation)
   .delete(protect, authorize('admin', 'user'), deleteReservation)
+router.route('/pay').post(protect, authorize('admin', 'user'), payReservation)
 
 module.exports = router

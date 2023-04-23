@@ -1,5 +1,9 @@
 const Reservation = require('../models/Reservation')
 const Restaurant = require('../models/Restaurant')
+const Stripe = require('stripe')
+const stripe = Stripe(
+  'sk_test_51MzxiPHZmkvTgpLDrGyvvtkWVNT9ef48L9WEXMwOytWoAerFg2vyzh2MlNNaGKMualb1APugadNnpt2UjLTczBQy001VtB5ZhF'
+)
 
 exports.getReservations = async (req, res, next) => {
   let query
@@ -148,5 +152,55 @@ exports.deleteReservation = async (req, res, next) => {
     res
       .status(500)
       .json({ success: false, message: 'Cannot delete Reservation' })
+  }
+}
+
+exports.payReservation = async (req, res, next) => {
+  const { cardNumber, cardExpMonth, cardExpYear, cardCVC } = req.body
+  try {
+    const customer = await stripe.customers.create({
+      name: req.user.name,
+      email: req.user.email,
+    })
+    // const cardToken = await stripe.tokens.create({
+    //   card: {
+    //     name: cardName,
+    //     number: cardNumber,
+    //     exp_month: cardExpMonth,
+    //     exp_year: cardExpYear,
+    //     cvc: cardCVV,
+    //   },
+    // })
+    // const card = await stripe.customers.createSource(customer.id, {
+    //   source: `${cardToken.id}`,
+    // })
+    // const charge = await stripe.charges.create({
+    //   amount: 1000 * 100,
+    //   currency: 'thb',
+    //   customer: customer.id,
+    //   card: card.id,
+    // })
+    const paymentMethod = await stripe.paymentMethods.create({
+      type: 'card',
+      card: {
+        number: cardNumber,
+        exp_month: cardExpMonth,
+        exp_year: cardExpYear,
+        cvc: cardCVC,
+      },
+    })
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      payment_method: paymentMethod.id,
+      payment_method_types: ['card'],
+      amount: 1000 * 100,
+      currency: 'thb',
+      confirm: true,
+      customer: customer.id,
+    })
+
+    return res.status(200).json({ success: true, message: paymentIntent })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
   }
 }
