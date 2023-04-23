@@ -40,6 +40,11 @@ const UserSchema = new mongoose.Schema({
     minlength: 6,
     select: false,
   },
+
+  reference: {
+    type: String,
+    require: true,
+  },
 })
 
 // Encrypt password using bcrypt

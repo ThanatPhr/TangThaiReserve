@@ -38,20 +38,14 @@ const RestaurantSchema = new mongoose.Schema({
       /^([01][0-9]|2[0-3]):[0-5][0-9]$/,
       'Please add a valid time in format 00:00',
     ],
-    validate: {
-      validator: closeTimeValidator,
-      message: 'Close time must be after the open time',
-    },
+  },
+
+  reservationCost: {
+    type: Number,
+    require: [true, 'Please add a reservation cost'],
+    min: 0,
   },
 })
-
-function closeTimeValidator(enterCloseTime) {
-  return (
-    this.openTime.split(':')[0] < enterCloseTime.split(':')[0] ||
-    (this.openTime.split(':')[0] == enterCloseTime.split(':')[0] &&
-      this.openTime.split(':')[1] < enterCloseTime.split(':')[1])
-  )
-}
 
 RestaurantSchema.pre('remove', async function (next) {
   console.log(`Reservations being removed from restaurant ${this._id}`)

@@ -21,6 +21,8 @@ router
   .get(protect, getReservation)
   .put(protect, authorize('admin', 'user'), updateReservation)
   .delete(protect, authorize('admin', 'user'), deleteReservation)
-router.route('/pay').post(protect, authorize('admin', 'user'), payReservation)
+router
+  .route('/pay/:id')
+  .post(protect, authorize('admin', 'user'), payReservation)
 
 module.exports = router

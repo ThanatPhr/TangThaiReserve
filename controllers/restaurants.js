@@ -89,6 +89,13 @@ exports.getRestaurant = async (req, res, next) => {
 
 exports.createRestaurant = async (req, res, next) => {
   try {
+    if (!isValidCloseTime(req.body.openTime, req.body.closeTime)) {
+      return res.status(400).json({
+        success: false,
+        data: 'Invalid Time',
+      })
+    }
+
     const restaurant = await Restaurant.create(req.body)
     res.status(201).json({
       success: true,
@@ -104,6 +111,13 @@ exports.createRestaurant = async (req, res, next) => {
 
 exports.updateRestaurant = async (req, res, next) => {
   try {
+    if (!isValidCloseTime(req.body.openTime, req.body.closeTime)) {
+      return res.status(400).json({
+        success: false,
+        data: 'Invalid Time',
+      })
+    }
+
     const restaurant = await Restaurant.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -150,4 +164,26 @@ exports.deleteRestaurant = async (req, res, next) => {
       data: error.message,
     })
   }
+}
+
+function isValidCloseTime(openTime, closeTime) {
+  const openHour = parseInt(openTime.split(':')[0])
+  const openMinute = parseInt(openTime.split(':')[1])
+  const closeHour = parseInt(closeTime.split(':')[0])
+  const closeMinute = parseInt(closeTime.split(':')[1])
+  if (
+    openHour >= 24 ||
+    openMinute >= 60 ||
+    openHour < 0 ||
+    openMinute < 0 ||
+    closeHour >= 24 ||
+    closeMinute >= 60 ||
+    closeHour < 0 ||
+    closeMinute < 0
+  ) {
+    return false
+  }
+  return (
+    openHour < closeHour || (openHour == closeHour && openMinute < closeMinute)
+  )
 }

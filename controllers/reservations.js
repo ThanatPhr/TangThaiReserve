@@ -1,5 +1,6 @@
 const Reservation = require('../models/Reservation')
 const Restaurant = require('../models/Restaurant')
+const User = require('../models/User.js')
 const Stripe = require('stripe')
 const stripe = Stripe(
   'sk_test_51MzxiPHZmkvTgpLDrGyvvtkWVNT9ef48L9WEXMwOytWoAerFg2vyzh2MlNNaGKMualb1APugadNnpt2UjLTczBQy001VtB5ZhF'
@@ -55,6 +56,7 @@ exports.getReservation = async (req, res, next) => {
 
 exports.addReservation = async (req, res, next) => {
   try {
+    req.body.reserveDate = new Date(req.body.reserveDate)
     req.body.restaurant = req.params.restaurantId
 
     const restaurant = await Restaurant.findById(req.params.restaurantId)
@@ -63,6 +65,22 @@ exports.addReservation = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: `No restaurant with the id of ${req.params.restaurantId}`,
+      })
+    }
+
+    const reserveHour = req.body.reserveDate.getHours()
+    const reserveMinute = req.body.reserveDate.getMinutes()
+    if (
+      !isValidReserveTime(
+        restaurant.openTime,
+        restaurant.closeTime,
+        reserveHour,
+        reserveMinute
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid reserve time',
       })
     }
 
@@ -85,13 +103,18 @@ exports.addReservation = async (req, res, next) => {
     })
   } catch (err) {
     console.log(err)
-    res.status(500).json({ success: false, message: 'Cannot add Reservation' })
+    res.status(500).json({ success: false, message: err.message })
   }
 }
 
 exports.updateReservation = async (req, res, next) => {
   try {
-    let reservation = await Reservation.findById(req.params.id)
+    req.body.reserveDate = new Date(req.body.reserveDate)
+
+    let reservation = await Reservation.findById(req.params.id).populate({
+      path: 'restaurant',
+      select: 'openTime, closeTime',
+    })
 
     if (!reservation) {
       return res.status(404).json({
@@ -107,6 +130,22 @@ exports.updateReservation = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: `User ${req.user.id} is not authorized to update this reservation`,
+      })
+    }
+
+    const reserveHour = req.body.reserveDate.getHours()
+    const reserveMinute = req.body.reserveDate.getMinutes()
+    if (
+      !isValidReserveTime(
+        reservation.restaurant.openTime,
+        reservation.restaurant.closeTime,
+        reserveHour,
+        reserveMinute
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid reserve time',
       })
     }
 
@@ -158,28 +197,23 @@ exports.deleteReservation = async (req, res, next) => {
 exports.payReservation = async (req, res, next) => {
   const { cardNumber, cardExpMonth, cardExpYear, cardCVC } = req.body
   try {
-    const customer = await stripe.customers.create({
-      name: req.user.name,
-      email: req.user.email,
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    const reservation = await Reservation.findById(req.params.id).populate({
+      path: 'restaurant',
+      select: 'reservationCost',
     })
-    // const cardToken = await stripe.tokens.create({
-    //   card: {
-    //     name: cardName,
-    //     number: cardNumber,
-    //     exp_month: cardExpMonth,
-    //     exp_year: cardExpYear,
-    //     cvc: cardCVV,
-    //   },
-    // })
-    // const card = await stripe.customers.createSource(customer.id, {
-    //   source: `${cardToken.id}`,
-    // })
-    // const charge = await stripe.charges.create({
-    //   amount: 1000 * 100,
-    //   currency: 'thb',
-    //   customer: customer.id,
-    //   card: card.id,
-    // })
+
+    if (!reservation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reservation not found',
+      })
+    }
+
     const paymentMethod = await stripe.paymentMethods.create({
       type: 'card',
       card: {
@@ -193,14 +227,28 @@ exports.payReservation = async (req, res, next) => {
     const paymentIntent = await stripe.paymentIntents.create({
       payment_method: paymentMethod.id,
       payment_method_types: ['card'],
-      amount: 1000 * 100,
+      amount: reservation.restaurant.reservationCost * 100,
       currency: 'thb',
       confirm: true,
-      customer: customer.id,
+      customer: user.reference,
     })
 
     return res.status(200).json({ success: true, message: paymentIntent })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }
+}
+
+function isValidReserveTime(openTime, closeTime, hour, minute) {
+  const openHour = parseInt(openTime.split(':')[0])
+  const openMinute = parseInt(openTime.split(':')[1])
+  const closeHour = parseInt(closeTime.split(':')[0])
+  const closeMinute = parseInt(closeTime.split(':')[1])
+
+  return (
+    hour >= openHour &&
+    hour <= closeHour &&
+    minute >= openMinute &&
+    minute <= closeMinute
+  )
 }
