@@ -113,7 +113,7 @@ exports.updateReservation = async (req, res, next) => {
 
     let reservation = await Reservation.findById(req.params.id).populate({
       path: 'restaurant',
-      select: 'openTime, closeTime',
+      select: 'openTime closeTime',
     })
 
     if (!reservation) {
