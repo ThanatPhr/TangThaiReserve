@@ -71,6 +71,7 @@ exports.addReservation = async (req, res, next) => {
     const reserveHour = req.body.reserveDate.getHours()
     const reserveMinute = req.body.reserveDate.getMinutes()
     if (
+      req.body.reserveDate < new Date() ||
       !isValidReserveTime(
         restaurant.openTime,
         restaurant.closeTime,
@@ -136,6 +137,7 @@ exports.updateReservation = async (req, res, next) => {
     const reserveHour = req.body.reserveDate.getHours()
     const reserveMinute = req.body.reserveDate.getMinutes()
     if (
+      req.body.reserveDate < new Date() ||
       !isValidReserveTime(
         reservation.restaurant.openTime,
         reservation.restaurant.closeTime,
