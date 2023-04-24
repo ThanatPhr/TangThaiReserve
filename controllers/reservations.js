@@ -233,6 +233,19 @@ exports.payReservation = async (req, res, next) => {
       customer: user.reference,
     })
 
+    if (paymentIntent.status == 'succeeded') {
+      await Reservation.findByIdAndUpdate(
+        req.params.id,
+        {
+          status: 'paid',
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+    }
+
     return res.status(200).json({ success: true, message: paymentIntent })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
