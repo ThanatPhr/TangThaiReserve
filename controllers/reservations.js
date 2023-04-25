@@ -71,6 +71,7 @@ exports.addReservation = async (req, res, next) => {
     const reserveHour = req.body.reserveDate.getHours()
     const reserveMinute = req.body.reserveDate.getMinutes()
     if (
+      req.body.reserveDate < new Date() ||
       !isValidReserveTime(
         restaurant.openTime,
         restaurant.closeTime,
@@ -113,7 +114,7 @@ exports.updateReservation = async (req, res, next) => {
 
     let reservation = await Reservation.findById(req.params.id).populate({
       path: 'restaurant',
-      select: 'openTime, closeTime',
+      select: 'openTime closeTime',
     })
 
     if (!reservation) {
@@ -136,6 +137,7 @@ exports.updateReservation = async (req, res, next) => {
     const reserveHour = req.body.reserveDate.getHours()
     const reserveMinute = req.body.reserveDate.getMinutes()
     if (
+      req.body.reserveDate < new Date() ||
       !isValidReserveTime(
         reservation.restaurant.openTime,
         reservation.restaurant.closeTime,
