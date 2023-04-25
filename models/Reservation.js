@@ -22,6 +22,12 @@ const ReservationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+
+  status: {
+    type: String,
+    enum: ['unpaid', 'paid'],
+    default: 'unpaid',
+  },
 })
 
 module.exports = mongoose.model('Reservation', ReservationSchema)

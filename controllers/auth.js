@@ -1,4 +1,8 @@
 const User = require('../models/User.js')
+const Stripe = require('stripe')
+const stripe = Stripe(
+  'sk_test_51MzxiPHZmkvTgpLDrGyvvtkWVNT9ef48L9WEXMwOytWoAerFg2vyzh2MlNNaGKMualb1APugadNnpt2UjLTczBQy001VtB5ZhF'
+)
 
 const sendTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJwtToken()
@@ -24,17 +28,24 @@ exports.register = async (req, res, next) => {
   const { name, email, tel, password, role } = req.body
 
   try {
+    const customer = await stripe.customers.create({
+      name: name,
+      email: email,
+    })
+    const reference = customer.id
+
     const user = await User.create({
       name,
       email,
       tel,
       password,
       role,
+      reference,
     })
 
     sendTokenResponse(user, 200, res)
   } catch (err) {
-    res.status(400).json({ success: false })
+    res.status(400).json({ success: false, message: err.message })
   }
 }
 
