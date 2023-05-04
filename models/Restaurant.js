@@ -48,7 +48,6 @@ const RestaurantSchema = new mongoose.Schema({
 })
 
 RestaurantSchema.pre('remove', async function (next) {
-  console.log(`Reservations being removed from restaurant ${this._id}`)
   await this.model('Reservation').deleteMany({ restaurant: this._id })
   next()
 })

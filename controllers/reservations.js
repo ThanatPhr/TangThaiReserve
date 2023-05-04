@@ -103,7 +103,6 @@ exports.addReservation = async (req, res, next) => {
       data: reservation,
     })
   } catch (err) {
-    console.log(err)
     res.status(500).json({ success: false, message: err.message })
   }
 }
@@ -151,14 +150,17 @@ exports.updateReservation = async (req, res, next) => {
       })
     }
 
-    reservation = await Reservation.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    })
+    reservation = await Reservation.findByIdAndUpdate(
+      req.params.id,
+      req.body.reserveDate,
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
 
     res.status(200).json({ success: true, data: reservation })
   } catch (err) {
-    console.log(err)
     res
       .status(500)
       .json({ success: false, message: 'Cannot update Reservation' })

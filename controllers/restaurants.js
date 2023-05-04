@@ -111,6 +111,25 @@ exports.createRestaurant = async (req, res, next) => {
 
 exports.updateRestaurant = async (req, res, next) => {
   try {
+    const oldRestaurant = await Restaurant.findById(req.params.id)
+    if (!oldRestaurant) {
+      return res.status(404).json({
+        success: false,
+        data: 'Restaurant not found',
+      })
+    }
+    if (!req.body.openTime) {
+      if (!req.body.closeTime) {
+        req.body.openTime = oldRestaurant.openTime
+        req.body.closeTime = oldRestaurant.closeTime
+      } else {
+        req.body.openTime = oldRestaurant.openTime
+      }
+    } else {
+      if (!req.body.closeTime) {
+        req.body.closeTime = oldRestaurant.closeTime
+      }
+    }
     if (!isValidCloseTime(req.body.openTime, req.body.closeTime)) {
       return res.status(400).json({
         success: false,
@@ -127,12 +146,6 @@ exports.updateRestaurant = async (req, res, next) => {
       }
     )
 
-    if (!restaurant) {
-      return res.status(404).json({
-        success: false,
-        data: 'Restaurant not found',
-      })
-    }
     res.status(200).json({
       success: true,
       data: restaurant,
