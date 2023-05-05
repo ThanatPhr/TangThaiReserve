@@ -201,20 +201,32 @@ exports.deleteReservation = async (req, res, next) => {
 exports.payReservation = async (req, res, next) => {
   const { cardNumber, cardExpMonth, cardExpYear, cardCVC } = req.body
   try {
-    const user = await User.findById(req.user.id)
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' })
-    }
-
     const reservation = await Reservation.findById(req.params.id).populate({
-      path: 'restaurant',
-      select: 'reservationCost',
+      path: 'restaurant user',
+      select: 'reservationCost reference',
     })
 
     if (!reservation) {
       return res.status(404).json({
         success: false,
         message: 'Reservation not found',
+      })
+    }
+
+    if (
+      reservation.user._id.toString() !== req.user.id &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: `User ${req.user.id} is not authorized to pay this reservation`,
+      })
+    }
+
+    if (reservation.status == 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'This reservation already paid',
       })
     }
 
@@ -234,7 +246,7 @@ exports.payReservation = async (req, res, next) => {
       amount: reservation.restaurant.reservationCost * 100,
       currency: 'thb',
       confirm: true,
-      customer: user.reference,
+      customer: reservation.user.reference,
     })
 
     if (paymentIntent.status == 'succeeded') {
@@ -248,6 +260,11 @@ exports.payReservation = async (req, res, next) => {
           runValidators: true,
         }
       )
+    } else {
+      return res.status(402).json({
+        success: false,
+        message: 'Payment unsuccessful',
+      })
     }
 
     return res.status(200).json({ success: true, message: paymentIntent })
