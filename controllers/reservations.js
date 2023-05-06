@@ -123,14 +123,19 @@ exports.updateReservation = async (req, res, next) => {
       })
     }
 
-    if (
-      reservation.user.toString() !== req.user.id &&
-      req.user.role !== 'admin'
-    ) {
-      return res.status(401).json({
-        success: false,
-        message: `User ${req.user.id} is not authorized to update this reservation`,
-      })
+    if (req.user.role !== 'admin') {
+      if (reservation.status == 'paid') {
+        return res.status(400).json({
+          success: false,
+          message: 'This reservation already paid cannot change date',
+        })
+      }
+      if (reservation.user.toString() !== req.user.id) {
+        return res.status(401).json({
+          success: false,
+          message: `User ${req.user.id} is not authorized to update this reservation`,
+        })
+      }
     }
 
     const reserveHour = req.body.reserveDate.getHours()
@@ -152,7 +157,7 @@ exports.updateReservation = async (req, res, next) => {
 
     reservation = await Reservation.findByIdAndUpdate(
       req.params.id,
-      req.body.reserveDate,
+      { reserveDate: req.body.reserveDate },
       {
         new: true,
         runValidators: true,
@@ -178,14 +183,19 @@ exports.deleteReservation = async (req, res, next) => {
       })
     }
 
-    if (
-      reservation.user.toString() !== req.user.id &&
-      req.user.role !== 'admin'
-    ) {
-      return res.status(401).json({
-        success: false,
-        message: `User ${req.user.id} is not authorized to delete this reservation`,
-      })
+    if (req.user.role !== 'admin') {
+      if (reservation.status == 'paid') {
+        return res.status(400).json({
+          success: false,
+          message: 'This reservation already paid cannot delete',
+        })
+      }
+      if (reservation.user.toString() !== req.user.id) {
+        return res.status(401).json({
+          success: false,
+          message: `User ${req.user.id} is not authorized to update this reservation`,
+        })
+      }
     }
 
     await reservation.remove()
@@ -279,10 +289,20 @@ function isValidReserveTime(openTime, closeTime, hour, minute) {
   const closeHour = parseInt(closeTime.split(':')[0])
   const closeMinute = parseInt(closeTime.split(':')[1])
 
-  return (
-    hour >= openHour &&
-    hour <= closeHour &&
-    minute >= openMinute &&
-    minute <= closeMinute
-  )
+  if (hour > openHour && hour < closeHour) {
+    return true
+  } else {
+    if (hour == openHour) {
+      if (minute >= openMinute) {
+        return true
+      }
+    }
+    if (hour == closeHour) {
+      if (minute <= closeMinute) {
+        return true
+      }
+    }
+  }
+
+  return false
 }
